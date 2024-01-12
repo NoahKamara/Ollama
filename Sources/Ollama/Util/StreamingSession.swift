@@ -8,11 +8,13 @@
 import Foundation
 
 
-final class StreamingSession<ResultType: Decodable>: NSObject, Identifiable, URLSessionDelegate, URLSessionDataDelegate {
-    
+
+final class StreamingSession<ResultType: Decodable, ErrorType: Decodable>: NSObject, Identifiable, URLSessionDelegate, URLSessionDataDelegate {
+        
     enum StreamingError: Error {
         case unknownContent
         case emptyContent
+        case decoded(ErrorType)
     }
     
     var onReceiveContent: ((StreamingSession, ResultType) -> Void)?
@@ -55,12 +57,19 @@ final class StreamingSession<ResultType: Decodable>: NSObject, Identifiable, URL
         do {
             let object = try decoder.decode(ResultType.self, from: data)
             onReceiveContent?(self, object)
-        } catch {
-            print("PROCESING ERORR", error)
-            onProcessingError?(self, error)
+        } catch let decodingError {
+            do {
+                let error = try decoder.decode(ErrorType.self, from: data)
+                onProcessingError?(self,StreamingError.decoded(error))
+            } catch {
+                onProcessingError?(self,decodingError)
+            }
         }
     }
     
 }
 
 
+struct OllamaError: Decodable {
+    let error: String
+}

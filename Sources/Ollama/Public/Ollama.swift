@@ -9,7 +9,7 @@ public protocol OllamaAPI {
 }
 
 public struct OllamaConfiguration {
-    let baseURI: URL
+    public let baseURI: URL
     
     public init(baseURI: URL) {
         self.baseURI = baseURI
@@ -47,6 +47,7 @@ extension OllamaAPI {
         do {
             return try decoder.decode(T.self, from: data)
         } catch {
+            try! data.write(to: URL(filePath: "/Users/noahkamara/Downloads/test.txt"))
             print("STRING", String(data: data, encoding: .utf8)!)
             print(error)
             throw error
@@ -55,7 +56,6 @@ extension OllamaAPI {
     
     func get<T: Decodable>(_ path: String, as type: T.Type = T.self) async throws -> T {
         let url = config.baseURI.appending(path: path)
-        print(url)
         let (data, _) = try await URLSession.shared.data(from: url)
         
         let response = try decodeResponse(data, as: T.self)
@@ -76,22 +76,26 @@ extension OllamaAPI {
         urlRequest.httpBody = bodyData
         
         return AsyncThrowingStream<T,Error> { continuation in
-            let session = StreamingSession<T>(urlRequest: urlRequest)
+            let session = StreamingSession<T,OllamaError>(urlRequest: urlRequest)
             session.onReceiveContent = { session, res in
                 continuation.yield(res)
             }
             
             session.onComplete = { session, error in
-                continuation.finish()
+                if let error {
+                    continuation.finish(throwing: error)
+                } else {
+                    continuation.finish()
+                }
             }
             
             session.onProcessingError = { session, err in
                 continuation.finish(throwing: err)
             }
             
-            continuation.onTermination = { @Sendable _ in
-                print("close session")
-            }
+//            continuation.onTermination = { @Sendable cont in
+//                print("close session")
+//            }
             
             session.perform()
         }
@@ -104,7 +108,7 @@ extension OllamaAPI {
     ) async throws -> T {
         let url = config.baseURI.appending(path: path)
         print("URL", url)
-        var request = URLRequest(url: URL(string: "http://localhost:11434/api/show")!)
+        var request = URLRequest(url: URL(string: "http://localhost:11434"+path)!)
         request.httpMethod = "POST"
         
         let bodyData = try JSONEncoder().encode(body)

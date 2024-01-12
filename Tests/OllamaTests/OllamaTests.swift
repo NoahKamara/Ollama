@@ -3,7 +3,7 @@ import XCTest
 
 final class OllamaTests: XCTestCase {
     let config = OllamaConfiguration(
-        baseURI: URL(string: "http://localhost:11434")!
+        baseURI: URL(string: "http://milleniumfalcon.localhost:11434")!
     )
     
     func testListModels() async throws {

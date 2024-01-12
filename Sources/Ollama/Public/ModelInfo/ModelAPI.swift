@@ -28,4 +28,24 @@ public struct OllamaModelAPI: OllamaAPI {
     public var chat: OllamaChatAPI {
         OllamaChatAPI(model: self)
     }
+    
+    public func embeddings(_ prompt: String) async throws -> [Double] {
+        let request = EmbeddingsRequest(
+            model: model,
+            prompt: prompt
+        )
+        
+        let res = try await post(
+            "/api/embeddings",
+            body: request,
+            as: SingleKey<[Double]>.self
+        )
+        
+        return res.value
+    }
+}
+
+public struct EmbeddingsRequest: Encodable {
+    let model: String
+    let prompt: String
 }

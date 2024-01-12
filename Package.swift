@@ -6,21 +6,37 @@ import PackageDescription
 let package = Package(
     name: "Ollama",
     platforms: [
-        .macOS(.v14)
+        .macOS(.v14),
+        .iOS(.v17)
     ],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "Ollama",
-            targets: ["Ollama"]),
+            targets: ["Ollama"]
+        )
     ],
+    dependencies: [.package(path: "../SwiftChain")],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "Ollama"),
+            name: "Ollama"
+        ),
         .testTarget(
             name: "OllamaTests",
-            dependencies: ["Ollama"]),
+            dependencies: ["Ollama"]
+        ),
     ]
 )
+
+let swiftSettings: [SwiftSetting] = [
+    // -enable-bare-slash-regex becomes
+    .enableUpcomingFeature("BareSlashRegexLiterals"),
+    // -warn-concurrency becomes
+    .enableUpcomingFeature("StrictConcurrency"),
+        .unsafeFlags(["-enable-actor-data-race-checks"],
+            .when(configuration: .debug)),
+]
+
+for target in package.targets {
+    target.swiftSettings = target.swiftSettings ?? []
+    target.swiftSettings?.append(contentsOf: swiftSettings)
+}

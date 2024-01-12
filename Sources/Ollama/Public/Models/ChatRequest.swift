@@ -7,22 +7,28 @@
 
 import Foundation
 
+public enum OllamaResponseFormat: String, Codable {
+    case json
+}
 
 public struct ChatRequest: Encodable {
-    typealias Message = ChatMessage
+    public typealias Format = OllamaResponseFormat
+    public typealias Message = ChatMessage
     
-    let model: String
-    let template: String?
-    let messages: [Message]
-    //    let format: String = "json"
+    public let model: String
+    public let template: String?
+    public let messages: [Message]
+    public let format: Format?
     
-    init(
+    public init(
         model: String,
         template: String? = nil,
-        messages: [Message]
+        messages: [Message],
+        format: Format? = nil
     ) {
         self.model = model
         self.template = template
         self.messages = messages
+        self.format = format
     }
 }

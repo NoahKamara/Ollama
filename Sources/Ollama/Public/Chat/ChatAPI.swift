@@ -21,35 +21,40 @@ public struct OllamaChatAPI: OllamaAPI {
         self.model = model.model
     }
     
-    public func get(messages: [Message] = []) async throws -> Response {
+    public func get(messages: [Message] = [], format: ChatRequest.Format? = nil) async throws -> Response {
         let request = Request(
             model: model,
-            messages: messages
+            messages: messages,
+            format: format
         )
         
         let stream = try await stream("/api/chat", body: request, as: Response.self)
         
-        let res = try await stream.reduce(Response?.none) { partialResult, response in
-            guard var result = partialResult else {
-                return response
+        var response: Response? = nil
+        
+        for try await res in stream {
+            guard response != nil else {
+                response = res
+                continue
             }
             
-            result.message.content += response.message.content
-            
-            return result
+            response?.message.content += res.message.content
         }
         
-        guard let res else {
+        guard let response else {
             fatalError("This shouldnt happen whoops")
         }
         
-        return res
+        return response
     }
     
-    public func stream(messages: [Message] = []) async throws -> AsyncThrowingStream<Response, any Error> {
+    
+    
+    public func stream(messages: [Message] = [], format: ChatRequest.Format? = nil) async throws -> AsyncThrowingStream<Response, any Error> {
         let request = Request(
             model: model,
-            messages: messages
+            messages: messages,
+            format: format
         )
         
         return try await stream("/api/chat", body: request, as: Response.self)

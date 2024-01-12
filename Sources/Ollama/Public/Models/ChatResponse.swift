@@ -10,8 +10,8 @@ import Foundation
 public struct ChatResponse: Decodable {
     public typealias Message = ChatMessage
     
-    public let model: String
-    public let createdAt: String
+    public let model: String?
+    public let createdAt: String?
     public var message: Message
     
     public let done: Bool
